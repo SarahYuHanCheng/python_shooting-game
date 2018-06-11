@@ -1,12 +1,24 @@
 import sys, pygame, random
 from pygame.locals import *
 
+class Cloud(pygame.sprite.Sprite):
+	"""docstring for Cloud"""
+	def __init__(self):
+		super(Cloud, self).__init__()
+		cloudpng=pygame.image.load('cloud.png').convert()
+		self.surf= pygame.transform.scale(cloudpng,(60,20))
+		self.rect = self.surf.get_rect(center=(random.randint(600,800), random.randint(0,600)))
+	def update(self):
+		self.rect.move_ip(-5,0)
+		if self.rect.right<0:
+			self.kill()
+
 class Enemy(pygame.sprite.Sprite):
 	"""docstring for Enemy"""
 	def __init__(self):
 		super(Enemy, self).__init__()
 		picture = pygame.image.load('missile.jpeg').convert()
-		self.surf = pygame.transform.scale(picture, (80, 80))
+		self.surf = pygame.transform.scale(picture, (30, 30))
 		self.surf.set_colorkey((255,255,255), RLEACCEL)
 		self.rect = self.surf.get_rect(
 			center=(random.randint(820,900), random.randint(0,600))) 
@@ -52,12 +64,15 @@ pygame.init()
 screen = pygame.display.set_mode((800,600))# (800,600)is tuple
 # screen is a surface
 ADDENEMY = pygame.USEREVENT+1 # 自定義事件需要比USEREVENT大
+ADDCLOUD = pygame.USEREVENT+2
 pygame.time.set_timer(ADDENEMY, 500)
+pygame.time.set_timer(ADDCLOUD, 1000)
 
 player = Player()
 background = pygame.Surface(screen.get_size())
 background.fill((0,0,0))
 enemies = pygame.sprite.Group()
+clouds = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
 all_sprites.add(player)
 
@@ -74,13 +89,21 @@ while running:
 			new_enemy = Enemy()
 			enemies.add(new_enemy)
 			all_sprites.add(new_enemy)
+		elif (event.type == ADDCLOUD):
+			new_cloud = Cloud()
+			clouds.add(new_cloud)
+			all_sprites.add(new_cloud)
 
 		screen.blit(background,(0,0))
 		pressed_keys = pygame.key.get_pressed()
+		clouds.update()
 		player.update(pressed_keys)
 		enemies.update()
+		
 		for entity in all_sprites:
 			screen.blit(entity.surf, entity.rect)
 		if pygame.sprite.spritecollideany(player, enemies):
 			player.kill()
+			running = False
+
 		pygame.display.flip()
